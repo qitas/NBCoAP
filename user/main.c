@@ -11,7 +11,7 @@
 
 static char MYMICCID[42] = "99900000000000000000";
 static char IMEI[] = "866971030432384";// "866971030432384";
-static char RSSI[] = "000000000000000000000000000";
+static char RSSI[] = "0000000000000000000000000000000";
 
 static int make_json_data(char *oustr)
 {
@@ -124,8 +124,9 @@ int main(void)
 	modem_poweron();	
 	vdd_5v_out(1);
 	vdd_3v3_out(1);
-	
-	utimer_sleep(2000);
+	led0_on();
+	uint32_t startcnt = RTC_GetCounter();
+	utimer_sleep(1000);
 	while(neul_bc26_get_netstat()<0){utimer_sleep(200);};	//等待连接上网络
 	{
 		/*
@@ -138,18 +139,18 @@ int main(void)
 		
 		int ret=0,PTR=0;
 		
-		RTC_SetAlarm(RTC_GetCounter() +  120);
+		RTC_SetAlarm(RTC_GetCounter()+ 60);
 		
 		/*
 		 * 发送ATI指令
 		 */
-		memset(recvbuf,0x0,RECV_BUF_LEN);
-		uart_data_write("ATI\r\n", strlen("ATI\r\n"), 0);
-		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
-		
-		memset(recvbuf,0x0,RECV_BUF_LEN);
-		uart_data_write("AT+QBAND?\r\n", strlen("AT+QBAND?\r\n"), 0);
-		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
+//		memset(recvbuf,0x0,RECV_BUF_LEN);
+//		uart_data_write("ATI\r\n", strlen("ATI\r\n"), 0);
+//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
+//		
+//		memset(recvbuf,0x0,RECV_BUF_LEN);
+//		uart_data_write("AT+QBAND?\r\n", strlen("AT+QBAND?\r\n"), 0);
+//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
 				
 		/*
 		 * 打开PSM
@@ -164,13 +165,18 @@ int main(void)
 		memset(recvbuf,0x0,RECV_BUF_LEN);
 		uart_data_write("ATE0\r\n", strlen("ATE0\r\n"), 0);
 		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
-
-
-
-
-		memset(recvbuf,0x0,RECV_BUF_LEN);
-		uart_data_write("AT+CGPADDR=1\r\n", strlen("AT+CGPADDR=1\r\n"), 0);
-		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
+		/*
+		 * 获取设备IP
+		 */
+//		memset(recvbuf,0x0,RECV_BUF_LEN);
+//		uart_data_write("AT+CGPADDR=1\r\n", strlen("AT+CGPADDR=1\r\n"), 0);
+//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
+//		if(strstr(recvbuf,"OK"))
+//		{
+//			memcpy(IMEI,uart2_rx_buffer+9,strlen(IMEI));	
+//			printf("IMEI : %s\r\n",IMEI);
+//		}		
+//		
 		/*
 		 * 获取设备IMEI
 		 */
@@ -201,45 +207,7 @@ int main(void)
 				printf("MYMICCID : [%s\r\n",MYMICCID);
 			}
 		}
-		/*
-		 * 获取信号值
-		 */
-		//memset(RSSI,0x0,32);
-		memset(recvbuf,0x0,RECV_BUF_LEN);
-		uart_data_write("AT+CSQ\r\n", strlen("AT+CSQ\r\n"), 0);
-		ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
-		
-		if(strstr(recvbuf,"OK"))
-		{
-//			memcpy(RSSI,uart2_rx_buffer+15,ret-23);	
-//			PTR=ret-23;
-			memcpy(RSSI,uart2_rx_buffer+8,ret-16);	
-			PTR=ret-16;
-			RSSI[PTR++] =' ';
-			//printf("CSQ RSSI: %s\r\n",RSSI);
-		}
-		/*
-		 * 获取信号值
-		 */
-		memset(recvbuf,0x0,RECV_BUF_LEN);
-		uart_data_write("AT+CESQ\r\n", strlen("AT+CESQ\r\n"), 0);
-		ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
-		
-		if(strstr(recvbuf,"OK"))
-		{	
-//			memcpy(RSSI+PTR,uart2_rx_buffer+17,ret-25);		
-//			PTR+=ret-25;	
-			memcpy(RSSI+PTR,uart2_rx_buffer+9,ret-17);		
-			PTR+=ret-17;
-			memset(RSSI+PTR,'.',27-PTR);					
-		}
-		char *p;
-		while((p = strchr(RSSI,','))!=NULL)
-		{
-			*p=':';
-		}
-		printf("RSSI: %s\r\n",RSSI);
-		
+
 		/*
 		 * 链接电信云服务器
 		 */
@@ -312,11 +280,58 @@ int main(void)
 			uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
 			free(tmpstr);
 		}
+		int cnt=0;
+		do{
+				/*
+				 * 获取信号值CSQ
+				 */
+				memset(recvbuf,0x0,RECV_BUF_LEN);
+				uart_data_write("AT+CSQ\r\n", strlen("AT+CSQ\r\n"), 0);
+				ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
+				if(strstr(recvbuf,"OK"))
+				{
+					memcpy(RSSI,uart2_rx_buffer+8,ret-16);	
+					PTR=ret-16;
+					RSSI[PTR++] =' ';
+				}
+				cnt++;
+				if(cnt>1) utimer_sleep(1000);
+			}while(ret==21 && cnt<5);
+		    if(cnt>4) RTC_SetAlarm(RTC_GetCounter()+ 60);
+			/*
+			 * 获取信号值CESQ
+			 */
+			memset(recvbuf,0x0,RECV_BUF_LEN);
+			uart_data_write("AT+CESQ\r\n", strlen("AT+CESQ\r\n"), 0);
+			ret = uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
 			
+			if(strstr(recvbuf,"OK"))
+			{	
+				memcpy(RSSI+PTR,uart2_rx_buffer+9,ret-17);		
+				PTR+=ret-17;
+				memset(RSSI+PTR,'.',27-PTR);					
+			}
+			char *p;
+			while((p = strchr(RSSI,','))!=NULL)
+			{
+				*p=':';
+			}
+			printf("RSSI: %s\r\n",RSSI);	
+			
+		
+		
+		/*
+		 * 发送数据
+		 */		
 		{
 			char *tmpstr;
+			char tmp[4];
 			tmpstr = (char*)malloc(128);
-			sprintf((char*)tmpstr,"AT+QLWDATASEND=19,0,0,32,%32s,0x0000\r\n", RSSI);
+			uint32_t endcnt = RTC_GetCounter() - startcnt;
+			printf("time cnt: %d\r\n",endcnt);	
+			sprintf(tmp,"%04d",endcnt);
+			strcat(RSSI,tmp);
+			sprintf((char*)tmpstr,"AT+QLWDATASEND=19,0,0,36,%36s,0x0000\r\n", RSSI);
 			uart_data_write(tmpstr,strlen(tmpstr),0);			
 			memset(recvbuf,0x0,RECV_BUF_LEN);
 			uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
@@ -335,10 +350,15 @@ int main(void)
 //			}
 //			free(tmp);
 //		}
+
+
 		
-		printf("连接建立完毕，waiting 3 second...\r\n");
-		utimer_sleep(3000);
-						
+		printf("连接建立完毕，waiting 1 second...\r\n");
+		utimer_sleep(1000);
+		
+//		memset(recvbuf,0x0,RECV_BUF_LEN);
+//		uart_data_write("AT+CPSMS=0\r\n", strlen("AT+CPSMS=0\r\n"), 0);
+//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);						
 		/*
 		释放内存
 		*/
@@ -346,16 +366,10 @@ int main(void)
 		free(atbuf);
 		free(jsonbuf);
 	}	
+	
 	printf("Sys_Enter_Standby CurrentTim %d\r\n",RTC_GetCounter());
-	
-	/*
-	 * 设置2MIN之后再次启动并进入PSM模式
-	 */
-	
-	
-//	modem_poweroff();
-//	vdd_5v_out(0);
-//	vdd_3v3_out(0);
+	modem_poweroff();
+	led0_off();
 	//进入休眠
 	utimer_sleep(20);
 	Sys_Enter_Standby();

@@ -297,7 +297,7 @@ int main(void)
 				cnt++;
 				if(cnt>1) utimer_sleep(1000);
 			}while(ret==21 && cnt<5);
-		    if(cnt>4) RTC_SetAlarm(RTC_GetCounter()+ 60);
+		    //if(cnt>4) RTC_SetAlarm(RTC_GetCounter()+ 60);
 			/*
 			 * 获取信号值CESQ
 			 */
@@ -329,8 +329,9 @@ int main(void)
 			tmpstr = (char*)malloc(128);
 			uint32_t endcnt = RTC_GetCounter() - startcnt;
 			printf("time cnt: %d\r\n",endcnt);	
-			sprintf(tmp,"%04d",endcnt);
-			strcat(RSSI,tmp);
+			sprintf(RSSI+32,"%02X",endcnt);
+			//strcpy(RSSI+32,tmp);
+			//strcat(RSSI,tmp);
 			sprintf((char*)tmpstr,"AT+QLWDATASEND=19,0,0,36,%36s,0x0000\r\n", RSSI);
 			uart_data_write(tmpstr,strlen(tmpstr),0);			
 			memset(recvbuf,0x0,RECV_BUF_LEN);

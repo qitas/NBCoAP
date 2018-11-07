@@ -11,7 +11,7 @@
 
 static char MYMICCID[42] = "99900000000000000000";
 static char IMEI[] = "866971030432384";// "866971030432384";
-static char RSSI[] = "0000000000000000000000000000000";
+static char RSSI[32] = "00000000000000000000000000000000";
 
 static int make_json_data(char *oustr)
 {
@@ -328,11 +328,15 @@ int main(void)
 			char tmp[4];
 			tmpstr = (char*)malloc(128);
 			uint32_t endcnt = RTC_GetCounter() - startcnt;
-			printf("time cnt: %d\r\n",endcnt);	
-			sprintf(RSSI+32,"%02X",endcnt);
-			//strcpy(RSSI+32,tmp);
+			sprintf(tmp,"%04X",endcnt);
+			printf("time cnt: %s\r\n",tmp);	
+			//strcpy(RSSI+28,tmp);
 			//strcat(RSSI,tmp);
-			sprintf((char*)tmpstr,"AT+QLWDATASEND=19,0,0,36,%36s,0x0000\r\n", RSSI);
+			RSSI[30]=tmp[2];
+			RSSI[31]=tmp[3];
+//			RSSI[33]=tmp[2];
+//			RSSI[34]=tmp[3];
+			sprintf((char*)tmpstr,"AT+QLWDATASEND=19,0,0,32,%32s,0x0000\r\n", RSSI);
 			uart_data_write(tmpstr,strlen(tmpstr),0);			
 			memset(recvbuf,0x0,RECV_BUF_LEN);
 			uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);

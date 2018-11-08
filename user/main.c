@@ -1,17 +1,16 @@
 
 #include <stdio.h>
-#include "main.h"
 #include "ov2640api.h"
 #include "BC26/BC26.h"
 #include "BASE64/cbase64.h"
 #include "JSON/cjson.h"
 #include "common.h"
-
+#include "main.h"
 
 
 static char MYMICCID[42] = "99900000000000000000";
 static char IMEI[] = "866971030432384";// "866971030432384";
-static char RSSI[32] = "00000000000000000000000000000000";
+static char RSSI[] = "00000000000000000000000000000000";
 
 static int make_json_data(char *oustr)
 {
@@ -126,8 +125,12 @@ int main(void)
 	vdd_3v3_out(1);
 	led0_on();
 	uint32_t startcnt = RTC_GetCounter();
-	utimer_sleep(1000);
-	while(neul_bc26_get_netstat()<0){utimer_sleep(200);};	//等待连接上网络
+	//utimer_sleep(1000);
+	while(neul_bc26_get_netstat()<0)
+	{
+		utimer_sleep(400);
+	}//等待连接上网络
+	
 	{
 		/*
 		 * 分配内存
@@ -139,7 +142,7 @@ int main(void)
 		
 		int ret=0,PTR=0;
 		
-		RTC_SetAlarm(RTC_GetCounter()+ 60);
+		
 		
 		/*
 		 * 发送ATI指令
@@ -370,15 +373,14 @@ int main(void)
 		free(recvbuf);
 		free(atbuf);
 		free(jsonbuf);
-	}	
-	
+	}
+	RTC_SetAlarm(RTC_GetCounter()+ 116);
 	printf("Sys_Enter_Standby CurrentTim %d\r\n",RTC_GetCounter());
 	modem_poweroff();
 	led0_off();
 	//进入休眠
 	utimer_sleep(20);
 	Sys_Enter_Standby();
-
 	return 0;
 }
 

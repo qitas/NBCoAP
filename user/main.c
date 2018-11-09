@@ -103,6 +103,7 @@ static int push_data_func(unsigned char * push_data , int push_length)
 *******************************************************************************/
 int main(void)
 {
+	int ret=0,PTR=0;
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH,(0x8000000+4));
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO,ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);
@@ -111,7 +112,9 @@ int main(void)
 	
 	init_uart1();
 	init_uart2();
-	RTC_Init();
+	ret=RTC_Init();
+	if(ret) NVIC_SystemReset();
+	
 	SET_BOOTLOADER_STATUS(2);
 	WKUP_Pin_Init();
 	
@@ -129,7 +132,10 @@ int main(void)
 	
 	while(neul_bc26_get_netstat()<0)
 	{
-		utimer_sleep(400);//等待连接上网络
+		utimer_sleep(200);//等待连接上网络
+		led0_off();
+		utimer_sleep(200);//等待连接上网络
+		led0_on();		
 	}
 	
 	{
@@ -140,7 +146,7 @@ int main(void)
 		char *recvbuf = malloc(RECV_BUF_LEN);
 		char *atbuf = malloc(1024);
 		char *jsonbuf = malloc(512);		
-		int ret=0,PTR=0;
+		
 			
 		
 		
@@ -193,23 +199,23 @@ int main(void)
 			printf("IMEI : %s\r\n",IMEI);
 		}		
 
-		memset(recvbuf,0x0,RECV_BUF_LEN);
-		uart_data_write("AT*MICCID\r\n", strlen("AT*MICCID\r\n"), 0);
-		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
-		{
-			char * __tmp = strstr(recvbuf,"OK");
-			if (__tmp > 0)
-			{
-				__tmp -= 24;
-				int i=0;
-				for(i=0;i<20;i++)
-				{
-					MYMICCID[i] = __tmp[i];
-				}
-				MYMICCID[20] = 0x0;
-				printf("MYMICCID : [%s\r\n",MYMICCID);
-			}
-		}
+//		memset(recvbuf,0x0,RECV_BUF_LEN);
+//		uart_data_write("AT*MICCID\r\n", strlen("AT*MICCID\r\n"), 0);
+//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);
+//		{
+//			char * __tmp = strstr(recvbuf,"OK");
+//			if (__tmp > 0)
+//			{
+//				__tmp -= 24;
+//				int i=0;
+//				for(i=0;i<20;i++)
+//				{
+//					MYMICCID[i] = __tmp[i];
+//				}
+//				MYMICCID[20] = 0x0;
+//				printf("MYMICCID : [%s\r\n",MYMICCID);
+//			}
+//		}
 
 		/*
 		 * 链接电信云服务器
@@ -283,8 +289,8 @@ int main(void)
 			uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
 			free(tmpstr);
 		}
-		int cnt=0;
-		do{
+		   int cnt=0;
+		   do{
 				/*
 				 * 获取信号值CSQ
 				 */
@@ -300,7 +306,7 @@ int main(void)
 				cnt++;
 				if(cnt>1) utimer_sleep(1000);
 			}while(ret==21 && cnt<5);
-		    //if(cnt>4) RTC_SetAlarm(RTC_GetCounter()+ 60);
+
 			/*
 			 * 获取信号值CESQ
 			 */
@@ -336,12 +342,12 @@ int main(void)
 			printf("RTCcnt: %s\r\n",tmp);	
 			//strcpy(RSSI+28,tmp);
 			//strcat(RSSI,tmp);
-			RSSI[25]=' ';
-			RSSI[26]=tmp[0];
+			RSSI[24]=' ';
+			RSSI[25]=tmp[0];
 			RSSI[26]=tmp[1];
 			RSSI[27]=tmp[2];
 			RSSI[28]=tmp[3];
-			RSSI[29]=' ';
+			RSSI[29]='-';
 			DURcnt = RTCcnt - startcnt;
 			sprintf(tmp,"%04X",DURcnt);
 			printf("time cnt: %s\r\n",tmp);				

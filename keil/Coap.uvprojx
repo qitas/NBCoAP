@@ -392,11 +392,6 @@
               <FilePath>..\USER\stm32f10x_it.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_conf.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\USER\stm32f10x_conf.h</FilePath>
-            </File>
-            <File>
               <FileName>system_stm32f10x.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\USER\system_stm32f10x.c</FilePath>

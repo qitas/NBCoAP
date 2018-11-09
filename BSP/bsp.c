@@ -108,24 +108,21 @@ void uart1_putchar(unsigned char data)
 void uart2_putchar(unsigned char data)
 {
 	USART_SendData(USART2, (uint8_t) data);
-
-  /* Loop until the end of transmission */
-  while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
-  {}
+	/* Loop until the end of transmission */
+	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET){}
 }
 
 void modem_poweron(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
-
-  MODEM_POWER_RCC_TYPE( MODEM_POEWR_RCC , ENABLE); 						 				 
-  GPIO_InitStructure.GPIO_Pin =  MODEM_POEWR_PIN;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD; 
-  GPIO_Init(MODEM_POEWR_GPIO, &GPIO_InitStructure);
-	                             
+	MODEM_POWER_RCC_TYPE( MODEM_POEWR_RCC , ENABLE); 						 				 
+	GPIO_InitStructure.GPIO_Pin =  MODEM_POEWR_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD; 
+	GPIO_Init(MODEM_POEWR_GPIO, &GPIO_InitStructure);
 	GPIO_ResetBits(MODEM_POEWR_GPIO,MODEM_POEWR_PIN);
 }
+
 void modem_poweroff(void)
 {
 	

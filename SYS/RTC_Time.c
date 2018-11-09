@@ -397,7 +397,7 @@ int RTC_Init(void)
 			temp++;
 			//rt_thread_sleep(1);
 		}
-		if(temp>=250)return 1;//初始化时钟失败,晶振有问题	    
+		if(temp>=250) return 1;//初始化时钟失败,晶振有问题	    
 		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);		//设置RTC时钟(RTCCLK),选择LSE作为RTC时钟    
 		RCC_RTCCLKCmd(ENABLE);	//使能RTC时钟  
 		RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
@@ -433,13 +433,19 @@ void RTC_IRQHandler(void)
 {		 
 	if (RTC_GetITStatus(RTC_IT_SEC) != RESET)//秒钟中断
 	{
+		RTC_ClearITPendingBit(RTC_IT_SEC);		
 	}
 	if(RTC_GetITStatus(RTC_IT_ALR)!= RESET)//闹钟中断
 	{
-		printf("alarm .\r\n");
-	} 				  								 
-
-	RTC_ClearITPendingBit(RTC_IT_SEC|RTC_IT_OW|RTC_IT_ALR);		//清闹钟中断
+		RTC_ClearITPendingBit(RTC_IT_ALR);	
+		printf("qitas:alt sleep on.\r\n");
+	}
+	if(RTC_GetITStatus(RTC_IT_OW)!= RESET)//闹钟中断
+	{
+		RTC_ClearITPendingBit(RTC_IT_OW);
+		printf("qitas:RTC_IT_OW.\r\n");
+	} 		
+		
 		  	    						 	   	 
 }
 

@@ -125,11 +125,12 @@ int main(void)
 	vdd_3v3_out(1);
 	led0_on();
 	uint32_t startcnt = RTC_GetCounter();
-	//utimer_sleep(1000);
+	uint32_t DURcnt=0;
+	
 	while(neul_bc26_get_netstat()<0)
 	{
-		utimer_sleep(400);
-	}//等待连接上网络
+		utimer_sleep(400);//等待连接上网络
+	}
 	
 	{
 		/*
@@ -138,10 +139,9 @@ int main(void)
 		#define RECV_BUF_LEN 1024
 		char *recvbuf = malloc(RECV_BUF_LEN);
 		char *atbuf = malloc(1024);
-		char *jsonbuf = malloc(512);
-		
+		char *jsonbuf = malloc(512);		
 		int ret=0,PTR=0;
-		
+			
 		
 		
 		/*
@@ -171,14 +171,14 @@ int main(void)
 		/*
 		 * 获取设备IP
 		 */
-//		memset(recvbuf,0x0,RECV_BUF_LEN);
-//		uart_data_write("AT+CGPADDR=1\r\n", strlen("AT+CGPADDR=1\r\n"), 0);
-//		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
-//		if(strstr(recvbuf,"OK"))
-//		{
-//			memcpy(IMEI,uart2_rx_buffer+9,strlen(IMEI));	
-//			printf("IMEI : %s\r\n",IMEI);
-//		}		
+		memset(recvbuf,0x0,RECV_BUF_LEN);
+		uart_data_write("AT+CGPADDR=1\r\n", strlen("AT+CGPADDR=1\r\n"), 0);
+		uart_data_read(recvbuf, RECV_BUF_LEN, 0, 200);	
+		if(strstr(recvbuf,"OK"))
+		{
+			memcpy(IMEI,uart2_rx_buffer+9,strlen(IMEI));	
+			printf("IMEI : %s\r\n",IMEI);
+		}		
 //		
 		/*
 		 * 获取设备IMEI
@@ -325,20 +325,28 @@ int main(void)
 		
 		/*
 		 * 发送数据
-		 */		
+		 */	
+				
 		{
 			char *tmpstr;
 			char tmp[4];
 			tmpstr = (char*)malloc(128);
-			uint32_t endcnt = RTC_GetCounter() - startcnt;
-			sprintf(tmp,"%04X",endcnt);
-			printf("time cnt: %s\r\n",tmp);	
+			uint32_t RTCcnt = RTC_GetCounter();
+			sprintf(tmp,"%04X",RTCcnt);
+			printf("RTCcnt: %s\r\n",tmp);	
 			//strcpy(RSSI+28,tmp);
 			//strcat(RSSI,tmp);
+			RSSI[25]=' ';
+			RSSI[26]=tmp[0];
+			RSSI[26]=tmp[1];
+			RSSI[27]=tmp[2];
+			RSSI[28]=tmp[3];
+			RSSI[29]=' ';
+			DURcnt = RTCcnt - startcnt;
+			sprintf(tmp,"%04X",DURcnt);
+			printf("time cnt: %s\r\n",tmp);				
 			RSSI[30]=tmp[2];
 			RSSI[31]=tmp[3];
-//			RSSI[33]=tmp[2];
-//			RSSI[34]=tmp[3];
 			sprintf((char*)tmpstr,"AT+QLWDATASEND=19,0,0,32,%32s,0x0000\r\n", RSSI);
 			uart_data_write(tmpstr,strlen(tmpstr),0);			
 			memset(recvbuf,0x0,RECV_BUF_LEN);
@@ -374,8 +382,9 @@ int main(void)
 		free(atbuf);
 		free(jsonbuf);
 	}
-	RTC_SetAlarm(RTC_GetCounter()+ 116);
-	printf("Sys_Enter_Standby CurrentTim %d\r\n",RTC_GetCounter());
+	
+	RTC_SetAlarm(RTC_GetCounter()+ (58-DURcnt));
+	printf("Enter_Standby CurrentTim %d\r\n",RTC_GetCounter());
 	modem_poweroff();
 	led0_off();
 	//进入休眠

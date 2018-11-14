@@ -130,12 +130,14 @@ int main(void)
 	uint32_t startcnt = RTC_GetCounter();
 	uint32_t DURcnt=0;
 	
-	while(neul_bc26_get_netstat()<0)
+	uint8_t search=0;
+	while(neul_bc26_get_netstat()<0 && search< 50)
 	{
 		utimer_sleep(200);//等待连接上网络
 		led0_off();
 		utimer_sleep(200);//等待连接上网络
-		led0_on();		
+		led0_on();	
+		search++;		
 	}
 	
 	{
